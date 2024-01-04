@@ -14,9 +14,7 @@ spec:
   containers:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
-    args: ["--dockerfile=Dockerfile",
-           "--context=git://github.com/yooee/imagetest.git",
-           "--destination=renum/test:v1.0"]
+    args:
     volumeMounts:
       - name: kaniko-secret
         mountPath: /kaniko/.docker
