@@ -44,16 +44,13 @@ spec:
         }
     }
     
-    stage('build') {
+    stage('build with kaniko') {
         steps {
-            container('kaniko') {
-            sh '/kaniko/executor --context `pwd` \
-               --destination docker.io/renum/test:v1.0 \
-               --insecure \
-               --skip-tls-verify  \
-               --cleanup \
-               --dockerfile Dockerfile \
-               --verbosity debug'
+            container(name: 'kaniko', shell: '/busybox/sh'  ) {
+              sh '''#!/busybox/sh
+                echo "From jenkins/inbound-agent:latest: > Dockerfile
+                /kaniko/executor --context 'pwd' --destination renum/test:v1.0
+                '''
             }
         }
     }
