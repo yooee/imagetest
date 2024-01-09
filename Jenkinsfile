@@ -26,16 +26,12 @@ spec:
 '''
         }
     }
-    parameters {
-        string(name: 'VERSION', defaultValue: '1.0.0', description: 'The version of the application')
-    }
     stages {
         stage('Checkout') {
             steps {
                 script {
-                    git branch: 'main',
-                        credentialsId: 'github-credentials',
-                        url: 'https://github.com/yooee/imagetest.git'
+                    checkout scm
+                    env.GIT_TAG = sh(script: "git describe --tags --always", returnStdout: true).trim()
                 }
             }
         }
@@ -43,9 +39,8 @@ spec:
             steps {
                 container('kaniko') {
                     script {
-                        env.VERSION = incrementVersion(env.VERSION)
                         sh '''
-                        /kaniko/executor --context git://github.com/yooee/imagetest.git --dockerfile=Dockerfile --destination=renum/test:${env.VERSION}
+                        /kaniko/executor --context git://github.com/yooee/imagetest.git --dockerfile=Dockerfile --destination=renum/test:${env.GIT_TAG}
                         '''
                     }
                 }
@@ -59,7 +54,3 @@ spec:
     }
 }
 
-def incrementVersion(String version) {
-    def (major, minor, patch) = version.tokenize('.')
-    return "${major}.${minor}.${patch.toInteger() + 1}"
-}
