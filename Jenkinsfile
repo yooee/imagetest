@@ -5,23 +5,22 @@ pipeline {
 apiVersion: v1
 kind: Pod
 metadata:
-  labels:
-    jenkins/agent-type: kaniko
+  name: kaniko
 spec:
   containers:
-    - name: kaniko
-      image: gcr.io/kaniko-project/executor:debug
-      volumeMounts:
-        - name: kaniko-secret
-          mountPath: /kaniko/.docker/
-    restartPolicy: Never
-    volumes:
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:latest
+    volumeMounts:
       - name: kaniko-secret
-        secret:
-          secretName: regcred
-          items:
-            - key: .dockerconfigjson
-              path: config.json
+        mountPath: /kaniko/.docker
+  restartPolicy: Never
+  volumes:
+    - name: kaniko-secret
+      secret:
+        secretName: regcred
+        items:
+          - key: .dockerconfigjson
+            path: config.json
             """
         }
     }
