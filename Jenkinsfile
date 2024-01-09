@@ -23,6 +23,7 @@ spec:
         items:
           - key: .dockerconfigjson
             path: config.json
+
 '''
         }
     }
@@ -30,19 +31,18 @@ spec:
         stage('Checkout') {
             steps {
                 script {
-                    checkout scm
-                    env.GIT_TAG = sh(script: "git describe --tags --always", returnStdout: true).trim()
+                    git branch: 'main',
+                        credentialsId: 'github-credentials',
+                        url: 'https://github.com/yooee/imagetest.git'
                 }
             }
         }
         stage('Build and Push Image') {
             steps {
                 container('kaniko') {
-                    script {
-                        sh '''
-                        /kaniko/executor --context git://github.com/yooee/imagetest.git --dockerfile=Dockerfile --destination=renum/test:${env.GIT_TAG}
-                        '''
-                    }
+                    sh '''
+                    /kaniko/executor --context git://github.com/yooee/imagetest.git --dockerfile=Dockerfile --destination=renum/test:v1.0.0
+                    '''
                 }
             }
         }
@@ -53,4 +53,3 @@ spec:
         }
     }
 }
-
