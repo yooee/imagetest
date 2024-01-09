@@ -1,19 +1,21 @@
 pipeline {
     agent {
         kubernetes {
-            yaml """
-apiVersion: v1
+            defaultContainer 'kaniko'
+            yaml '''
 kind: Pod
-metadata:
-  name: kaniko
 spec:
   containers:
   - name: kaniko
-    image: gcr.io/kaniko-project/executor:latest
+    image: gcr.io/kaniko-project/executor:debug
+    imagePullPolicy: Always
+    command:
+    - sleep
+    args:
+    - 99d
     volumeMounts:
       - name: kaniko-secret
         mountPath: /kaniko/.docker
-  restartPolicy: Never
   volumes:
     - name: kaniko-secret
       secret:
@@ -21,33 +23,34 @@ spec:
         items:
           - key: .dockerconfigjson
             path: config.json
-            """
+
+'''
         }
     }
-
-    environment {
-        DOCKERHUB_USERNAME = "renum"
-        IMAGE_NAME = "test"
-    }
-
     stages {
-        stage("Build Docker Image & Push to Docker Hub") {
+        stage('Checkout') {
             steps {
-                container("kaniko") {
-                    script {
-                        def context = "."
-                        def dockerfile = "Dockerfile"
-                        def image = "${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
-
-                        sh "/kaniko/executor --context ${context} --dockerfile ${dockerfile} --destination ${image}"
-                    }
+                script {
+                    git branch: 'main',
+                        credentialsId: 'github-credentials',
+                        url: 'https://github.com/yooee/imagetest.git'
+                }
+            }
+        }
+        stage('Build and Push Image') {
+            steps {
+                container('kaniko') {
+                    sh '''
+                    /kaniko/executor --context git://github.com/yooee/imagetest.git --dockerfile=Dockerfile --destination=renum/test:v1.0
+                    '''
                 }
             }
         }
     }
     post {
-        always {
-            echo "The process is completed."
+        success {
+            echo 'Image build and push to the registry has been completed successfully.'
         }
     }
 }
+
